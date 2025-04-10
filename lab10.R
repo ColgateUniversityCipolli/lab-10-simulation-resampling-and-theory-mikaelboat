@@ -19,8 +19,17 @@ percentile_97.5 <- quantile(sims$poll, 0.975)
 moe1 <- (percentile_97.5 - percentile_2.5) / 2
 
 sample.plot <- ggplot(data = sims) +
-  geom_histogram(aes(x = poll, y = after_stat(density))) +
-  geom_density(aes(x = poll))
+  geom_histogram(aes(x = poll, y = after_stat(density)),
+                 breaks = seq(0.32, 0.48, 0.005),
+                 color="grey") +
+  geom_density(aes(x = poll)) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Probability", y = "Frequency", title = "Poll sample") +
+  theme_bw() 
+
+percentile_2.5 <- quantile(sims$poll, 0.025)
+percentile_97.5 <- quantile(sims$poll, 0.975)
+moe <- (percentile_97.5 - percentile_2.5) / 2
 
 #####################
 # testing twice the sample size
@@ -28,12 +37,20 @@ sample_2 <- rbinom(n = 10000, size = samp.size * 2, prob = 0.39)
 sims_2 <- tibble(poll = sample_2/2008)
 
 sample.plot2 <- ggplot(data = sims_2) +
-  geom_histogram(aes(x = poll, y = after_stat(density))) +
-  geom_density(aes(x = poll)) 
+  geom_histogram(aes(x = poll, y = after_stat(density)),
+                 breaks = seq(0.34, 0.44, 0.005),
+                 color = "grey") +
+  geom_density(aes(x = poll)) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Probability", y = "Frequency", title = "Poll sample") +
+  theme_bw() 
 
 percentile_2.5 <- quantile(sims_2$poll, 0.025)
 percentile_97.5 <- quantile(sims_2$poll, 0.975)
 moe2 <- (percentile_97.5 - percentile_2.5) / 2
+
+
+two.samples = sample.plot + sample.plot2
 
 ##########################################
 # TASK 2
@@ -53,15 +70,23 @@ for (i in 1:R){
 
 
 (resample.plot <- ggplot(data = gallup.resamples) +
-  geom_histogram(aes(x = p.hat, 
-                     y = after_stat(density))) +
-  geom_density(aes(x = p.hat))
+  geom_histogram(aes(x = p.hat, y = after_stat(density)),
+                 breaks = seq(0.325, 0.475, 0.005), 
+                 color = "grey") +
+  geom_density(aes(x = p.hat)) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Probability", y = "Density", title = "Resampling") +
+  theme_bw()
   )
+
+percentile_2.5 <- quantile(gallup.resamples$p.hat, 0.025)
+percentile_97.5 <- quantile(gallup.resamples$p.hat, 0.975)
+moe3 <- (percentile_97.5 - percentile_2.5) / 2
 
 ##########################################
 # TASK 3
 ##########################################
-N <- seq(from = 100, to = 300, by = 10)
+N <- seq(from = 100, to = 3000, by = 10)
 P <- seq(from = 0.01, to = 0.99, by = 0.01)
 
 simulations <- tibble(
@@ -71,7 +96,7 @@ simulations <- tibble(
 
 for (i in N){
   for (j in P){
-    curr.sim <- rbinom(n = 10000, size = i, prob = j)
+    curr.sim <- rbinom(n = 10000, size = i, prob = j) / i 
     percentile_2.5 <- quantile(curr.sim, 0.025)
     percentile_97.5 <- quantile(curr.sim, 0.975)
     num <- (percentile_97.5 - percentile_2.5) / 2
@@ -81,7 +106,12 @@ for (i in N){
 }
 
 result.p <- ggplot(data = simulations) +
-  geom_raster(aes(x = n, y = p, fill = margin.of.error))
+  geom_raster(aes(x = n, y = p, fill = margin.of.error)) +
+  scale_fill_viridis_c(option = "inferno") +
+  geom_hline(yintercept = 0) +
+  labs(x = "Sample size", 
+       y = "Percent satisfied", 
+       title = "Estimated margin of error")
 
 ###########################################
 # TASK 4
@@ -104,4 +134,9 @@ for (n in N) {
 }
 
 wilson.plot <- ggplot(data = wilson.results) +
-  geom_raster(aes(x = n, y = p, fill = margin.of.error)) 
+  geom_raster(aes(x = n, y = p, fill = margin.of.error)) +
+  geom_hline(yintercept = 0) +
+  scale_fill_viridis_c(option = "inferno") +
+  labs(x = "Sample size", y = "Percent Satisfied", title = "Wilson MOE") +
+  theme_bw()
+  
